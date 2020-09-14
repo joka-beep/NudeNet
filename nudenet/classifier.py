@@ -1,6 +1,9 @@
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
+
 import os
 import cv2
-import keras
+#import keras
 import pydload
 import logging
 import numpy as np
@@ -102,7 +105,7 @@ def load_images(image_paths, image_size, image_names):
     for i, img_path in enumerate(image_paths):
         try:
             image = load_img(img_path, target_size=image_size)
-            image = keras.preprocessing.image.img_to_array(image)
+            image = tf.keras.preprocessing.image.img_to_array(image)
             image /= 255
             loaded_images.append(image)
             loaded_image_paths.append(image_names[i])
@@ -136,7 +139,7 @@ class Classifier:
             print("Downloading the checkpoint to", model_path)
             pydload.dload(url, save_to_path=model_path, max_time=None)
 
-        self.nsfw_model = keras.models.load_model(model_path)
+        self.nsfw_model = tf.keras.models.load_model(model_path)
 
     def classify_video(
         self,

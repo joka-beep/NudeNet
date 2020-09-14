@@ -6,7 +6,7 @@ from keras_retinanet.utils.image import preprocess_image, resize_image
 from keras_retinanet.utils.visualization import draw_box, draw_caption
 from keras_retinanet.utils.colors import label_color
 
-from .video_utils import get_interest_frames_from_video
+from video_utils import get_interest_frames_from_video
 
 import cv2
 import numpy as np
@@ -75,6 +75,7 @@ class Detector:
             print("Downloading the classes list to", classes_path)
             pydload.dload(classes_url, save_to_path=classes_path, max_time=None)
 
+        
         self.detection_model = models.load_model(
             checkpoint_path, backbone_name="resnet50"
         )
