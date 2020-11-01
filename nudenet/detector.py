@@ -200,6 +200,11 @@ class Detector:
         else:
             boxes = [i for i in boxes]
 
+        #put pussy at the end so that the stamp is not distorted
+        genitalia = [i for i in boxes if i["label"] == "EXPOSED_GENITALIA_F"]
+        boxes = [i for i  in boxes if i["label"] != "EXPOSED_GENITALIA_F"]
+        boxes += genitalia
+
         for item in boxes:
             box = item["box"]
             part = image[box[1] : box[3], box[0] : box[2]]
@@ -209,21 +214,23 @@ class Detector:
             if with_stamp:
                 stamp = cv2.imread("/home/jonas/.data/Pictures/censorator/wip/stamp.png", -1)
                 if item["label"] == "EXPOSED_GENITALIA_F":
+                    #rectangle to square conversion with average sizes
                     x_dimensions = abs(box[0]-box[2])
                     y_dimensions = abs(box[1]-box[3])
                     dimensions = int( (x_dimensions + y_dimensions) / 2)
 
-                    s_img = cv2.resize(stamp, (dimensions, dimensions), interpolation=cv2.INTER_AREA)
+                    # calculate the offset including medium error due to rectangle to square conversion
+                    offset_x = min(box[0], box[2]) + int((x_dimensions-dimensions)/2)
+                    offset_y = min(box[1], box[3]) + int((y_dimensions-dimensions)/2)
 
-                    print(dimensions)
+                    s_img = cv2.resize(stamp, (dimensions, dimensions), interpolation=cv2.INTER_AREA)
 
                     alpha_s = s_img[:, :, 3] / 255.0
                     alpha_l = 1.0 - alpha_s
-                    offset_x = min(box[0], box[2]) + int((x_dimensions-dimensions)/2)
-                    offset_y = min(box[1], box[3]) + int((y_dimensions-dimensions)/2)
                     for c in range(0, 3):
                         image[offset_y:offset_y+dimensions, offset_x:offset_x+dimensions, c] = (alpha_s * s_img[:, :, c] +
                                                                   alpha_l * image[offset_y:offset_y+dimensions, offset_x:offset_x+dimensions, c])
+
         if visualize:
             cv2.imshow("Blurred image", image)
             cv2.waitKey(0)
