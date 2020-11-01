@@ -1,32 +1,46 @@
 import sys
 import os
 from detector import Detector
+import argparse
 
 
-def files_in(directory):
-	print("Filenames: ")
+def images_in(path):
 	filenames = []
-	for root, dirs, files in os.walk(directory):
-		for f in files:
-			filenames.append(os.path.abspath(os.path.join(directory, f)))
-	print(filenames)
-	return filenames
+	if os.path.isdir(path):
+		print("Filenames: ")
+		filenames = []
+		for root, dirs, files in os.walk(path):
+			for f in files:
+				filenames.append(os.path.abspath(os.path.join(path, f)))
+	elif os.path.isfile(path):
+		filenames.append(path)
+	else:
+		print("path invalid")
+
+	images = [f for f in filenames if f.lower().endswith(".jpg") or f.lower().endswith(".png") or f.lower().endswith(".jpeg")]
+
+	print(images)
+	return images
 
 
-def main(argv):
-	files = files_in(argv)
-
-	selected_files = [f for f in files if f.endswith(".jpg") or f.endswith(".png") or f.endswith(".jpeg")]
+def main(args):
+	images = images_in(args.input)
 
 	detector = Detector()
-	censored_parts = ["EXPOSED_BUTTOCKS", "EXPOSED_BREAST_F", "EXPOSED_GENITALIA_F", "EXPOSED_ANUS", "EXPOSED_BUTTOCKS", "EXPOSED_BREAST_F"]
+	exposed_parts = ["EXPOSED_BUTTOCKS", "EXPOSED_BREAST_F", "EXPOSED_GENITALIA_F"]
 	covered_parts =["COVERED_BUTTOCKS", "COVERED_BREAST_F", "COVERED_GENITALIA_F"]
 	
 
-	for f in selected_files:
+	for f in images:
 		path, filename = os.path.split(f)
-		detector.censor(f, out_path=filename, visualize=False, parts_to_blur=censored_parts+covered_parts)
+		name, extension = os.path.splitext(filename)
+		detector.censor(f, out_path=name+"_censored"+extension, visualize=False, parts_to_blur=exposed_parts)
 
 
 if __name__ == "__main__":
-	main(sys.argv[1])
+	parser = argparse.ArgumentParser()
+	parser.add_argument('-i', '--input')
+	parser.add_argument('-o', '--output', required=False)
+	args = parser.parse_args()
+	print(args)
+	main(args)
