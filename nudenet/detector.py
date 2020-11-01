@@ -182,7 +182,7 @@ class Detector:
         # return the pixelated blurred image
         return image
 
-    def censor(self, img_path, out_path=None, visualize=False, parts_to_blur=[]):
+    def censor(self, img_path, out_path=None, visualize=False, parts_to_blur=[], with_stamp=False):
         if not out_path and not visualize:
             print(
                 "No out_path passed and visualize is set to false. There is no point in running this function then."
@@ -191,20 +191,39 @@ class Detector:
 
         image = cv2.imread(img_path)
         boxes = self.detect(img_path)
+        print(boxes)
+
+
 
         if parts_to_blur:
-            boxes = [i["box"] for i in boxes if i["label"] in parts_to_blur]
+            boxes = [i for i in boxes if i["label"] in parts_to_blur]
         else:
-            boxes = [i["box"] for i in boxes]
+            boxes = [i for i in boxes]
 
-        for box in boxes:
+        for item in boxes:
+            box = item["box"]
             part = image[box[1] : box[3], box[0] : box[2]]
             part = self.pixelize(part)
-            image[box[1] : box[3], box[0] : box[2]] = part
-            #image = cv2.rectangle(
-            #    image, (box[0], box[1]), (box[2], box[3]), (0, 0, 0), cv2.FILLED
-            #)
+            image[box[1]:box[3], box[0]:box[2]] = part
 
+            if with_stamp:
+                stamp = cv2.imread("/home/jonas/.data/Pictures/censorator/wip/stamp.png", -1)
+                if item["label"] == "EXPOSED_GENITALIA_F":
+                    x_dimensions = abs(box[0]-box[2])
+                    y_dimensions = abs(box[1]-box[3])
+                    dimensions = int( (x_dimensions + y_dimensions) / 2)
+
+                    s_img = cv2.resize(stamp, (dimensions, dimensions), interpolation=cv2.INTER_AREA)
+
+                    print(dimensions)
+
+                    alpha_s = s_img[:, :, 3] / 255.0
+                    alpha_l = 1.0 - alpha_s
+                    offset_x = min(box[0], box[2]) + int((x_dimensions-dimensions)/2)
+                    offset_y = min(box[1], box[3]) + int((y_dimensions-dimensions)/2)
+                    for c in range(0, 3):
+                        image[offset_y:offset_y+dimensions, offset_x:offset_x+dimensions, c] = (alpha_s * s_img[:, :, c] +
+                                                                  alpha_l * image[offset_y:offset_y+dimensions, offset_x:offset_x+dimensions, c])
         if visualize:
             cv2.imshow("Blurred image", image)
             cv2.waitKey(0)

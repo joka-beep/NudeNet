@@ -27,20 +27,29 @@ def main(args):
 	images = images_in(args.input)
 
 	detector = Detector()
-	exposed_parts = ["EXPOSED_BUTTOCKS", "EXPOSED_BREAST_F", "EXPOSED_GENITALIA_F"]
+	exposed_parts = ["EXPOSED_ANUS", "EXPOSED_BUTTOCKS", "EXPOSED_BREAST_F", "EXPOSED_GENITALIA_F"]
 	covered_parts =["COVERED_BUTTOCKS", "COVERED_BREAST_F", "COVERED_GENITALIA_F"]
-	
+
+	if args.strict:
+		to_blur = exposed_parts + covered_parts
+	elif args.casual:
+		to_blur = ["EXPOSED_BREAST_F", "EXPOSED_GENITALIA_F"]
+	else:
+		to_blur = exposed_parts
 
 	for f in images:
 		path, filename = os.path.split(f)
 		name, extension = os.path.splitext(filename)
-		detector.censor(f, out_path=name+"_censored"+extension, visualize=False, parts_to_blur=exposed_parts)
+		detector.censor(f, out_path=name+"_censored"+extension, visualize=False, parts_to_blur=to_blur, with_stamp=args.stamped)
 
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument('-i', '--input')
 	parser.add_argument('-o', '--output', required=False)
+	parser.add_argument('-s', '--strict', action="store_true", default=False)
+	parser.add_argument('-c', '--casual', action="store_true", default=False)
+	parser.add_argument('--stamped', action="store_true", default=False)
 	args = parser.parse_args()
 	print(args)
 	main(args)
